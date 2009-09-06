@@ -464,30 +464,29 @@ gst_teletext_push_page (GstTeletext * teletext, vbi_page * page)
 {
   GstBuffer *buf;
   guint size;
-  GstCaps *res;
+  GstCaps *res, *caps;
   GstFlowReturn result;
   gint width, height;
+  GstPadTemplate *templ;
 
   /* one character occupies 12 x 10 pixels */
   width = page->columns * 12;
   height = page->rows * 10;
 
-  res = gst_caps_new_simple ("video/x-raw-rgb",
-    "bpp", G_TYPE_INT, 32,
-    "depth", G_TYPE_INT, 32,
-    "endianness", G_TYPE_INT, BIG_ENDIAN,
-    "red_mask", G_TYPE_INT, GST_VIDEO_BYTE1_MASK_32_INT,
-    "green_mask", G_TYPE_INT, GST_VIDEO_BYTE2_MASK_32_INT,
-    "blue_mask", G_TYPE_INT, GST_VIDEO_BYTE3_MASK_32_INT,
-    "alpha_mask", G_TYPE_INT, GST_VIDEO_BYTE4_MASK_32_INT,
+  caps = gst_caps_new_simple ("video/x-raw-rgb",
     "width", G_TYPE_INT, width, 
     "height", G_TYPE_INT, height, 
     "framerate", GST_TYPE_FRACTION, teletext->rate_numerator,
     teletext->rate_denominator, NULL);
 
-  if (!gst_pad_set_caps (teletext->srcpad, res)) {
-    GST_ELEMENT_ERROR (teletext, CORE, NEGOTIATION, (NULL), (NULL));
-  }
+  templ = gst_static_pad_template_get (&src_template);
+  res = gst_caps_intersect (caps, gst_pad_template_get_caps (templ));
+  gst_caps_unref (caps);
+  gst_object_unref (templ);
+
+  if (!gst_pad_set_caps (teletext->srcpad, res))
+    goto not_negotiated;
+
   gst_caps_unref (res);
 
   size = (guint)width * (guint)height * sizeof(vbi_rgba);
@@ -519,6 +518,11 @@ gst_teletext_push_page (GstTeletext * teletext, vbi_page * page)
   return result;
 
   /* ERRORS */
+not_negotiated:
+  {
+    gst_caps_unref (res);
+    return GST_FLOW_NOT_NEGOTIATED;
+  }
 no_buffer:
   {
     GST_DEBUG_OBJECT (teletext, "could not allocate buffer");
