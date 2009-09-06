@@ -100,7 +100,7 @@ main (int argv, char **argc)
     create_window ();
 
     pipeline = gst_parse_launch (LIVE_PIPELINE
-        " ! mpegtsdemux ! private/teletext ! teletext name=tele ! ffmpegcolorspace ! ximagesink name=xsink",
+        " ! mpegtsdemux ! private/teletext ! teletextdec name=tele ! ffmpegcolorspace ! ximagesink name=xsink",
         &error);
     if (pipeline == NULL) {
         g_critical ("%s\n", error->message);

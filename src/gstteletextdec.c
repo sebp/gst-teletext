@@ -19,14 +19,14 @@
  */
 
 /**
- * SECTION:element-teletext
+ * SECTION:element-teletextdec
  *
  * Decode PES stream containing teletext information to RGBA stream
  *
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch -v -m filesrc location=recording.mpeg ! mpegtsdemux ! private/teletext ! teletext ! ffmpegcolorspace ! ximagesink
+ * gst-launch -v -m filesrc location=recording.mpeg ! mpegtsdemux ! private/teletext ! teletextdec ! ffmpegcolorspace ! ximagesink
  * ]|
  * </refsect2>
  */
@@ -38,10 +38,10 @@
 #include <gst/gst.h>
 #include <gst/video/video.h>
 
-#include "gstteletext.h"
+#include "gstteletextdec.h"
 
-GST_DEBUG_CATEGORY_STATIC (gst_teletext_debug);
-#define GST_CAT_DEFAULT gst_teletext_debug
+GST_DEBUG_CATEGORY_STATIC (gst_teletextdec_debug);
+#define GST_CAT_DEFAULT gst_teletextdec_debug
 
 /* Filter signals and args */
 enum
@@ -80,35 +80,35 @@ GST_STATIC_PAD_TEMPLATE (
 
 /* debug category for filtering log messages */
 #define DEBUG_INIT(bla) \
-  GST_DEBUG_CATEGORY_INIT (gst_teletext_debug, "teletext", 0, "Teletext decoder");
+  GST_DEBUG_CATEGORY_INIT (gst_teletextdec_debug, "teletext", 0, "Teletext decoder");
 
-GST_BOILERPLATE_FULL (GstTeletext, gst_teletext, GstElement,
+GST_BOILERPLATE_FULL (GstTeletextDec, gst_teletextdec, GstElement,
     GST_TYPE_ELEMENT, DEBUG_INIT);
 
-static void gst_teletext_set_property (GObject * object, guint prop_id,
+static void gst_teletextdec_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec);
-static void gst_teletext_get_property (GObject * object, guint prop_id,
+static void gst_teletextdec_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec);
-static void gst_teletext_finalize (GObject *object);
+static void gst_teletextdec_finalize (GObject *object);
 
-static GstStateChangeReturn gst_teletext_change_state (GstElement * element,
+static GstStateChangeReturn gst_teletextdec_change_state (GstElement * element,
     GstStateChange transition);
 
-static GstFlowReturn gst_teletext_chain (GstPad * pad, GstBuffer * buf);
-static gboolean gst_teletext_sink_event (GstPad * pad, GstEvent * event);
+static GstFlowReturn gst_teletextdec_chain (GstPad * pad, GstBuffer * buf);
+static gboolean gst_teletextdec_sink_event (GstPad * pad, GstEvent * event);
 
-static vbi_bool gst_teletext_convert (vbi_dvb_demux *	dx, gpointer user_data,
+static vbi_bool gst_teletextdec_convert (vbi_dvb_demux *	dx, gpointer user_data,
     const vbi_sliced * sliced, guint n_lines, gint64 pts);
 static void event_handler (vbi_event * ev, void * user_data);
 
-static GstFlowReturn gst_teletext_push_page (GstTeletext *teletext, vbi_page *page);
-static void gst_teletext_zvbi_init (GstTeletext * teletext);
-static void gst_teletext_zvbi_clear (GstTeletext * teletext);
+static GstFlowReturn gst_teletextdec_push_page (GstTeletextDec *teletext, vbi_page *page);
+static void gst_teletextdec_zvbi_init (GstTeletextDec * teletext);
+static void gst_teletextdec_zvbi_clear (GstTeletextDec * teletext);
 
 /* GObject vmethod implementations */
 
 static void
-gst_teletext_base_init (gpointer klass)
+gst_teletextdec_base_init (gpointer klass)
 {
   GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
 
@@ -126,18 +126,18 @@ gst_teletext_base_init (gpointer klass)
 
 /* initialize the gstteletext's class */
 static void
-gst_teletext_class_init (GstTeletextClass * klass)
+gst_teletextdec_class_init (GstTeletextDecClass * klass)
 {
   GObjectClass *gobject_class;
   GstElementClass *gstelement_class;
 
   gobject_class = G_OBJECT_CLASS (klass);
-  gobject_class->set_property = gst_teletext_set_property;
-  gobject_class->get_property = gst_teletext_get_property;
-  gobject_class->finalize = gst_teletext_finalize;
+  gobject_class->set_property = gst_teletextdec_set_property;
+  gobject_class->get_property = gst_teletextdec_get_property;
+  gobject_class->finalize = gst_teletextdec_finalize;
 
   gstelement_class = GST_ELEMENT_CLASS (klass);
-  gstelement_class->change_state = gst_teletext_change_state;
+  gstelement_class->change_state = gst_teletextdec_change_state;
 
   g_object_class_install_property (gobject_class, PROP_PAGENO,
       g_param_spec_int ("page", "Page number",
@@ -154,13 +154,13 @@ gst_teletext_class_init (GstTeletextClass * klass)
  * initialize instance structure
  */
 static void
-gst_teletext_init (GstTeletext *teletext, GstTeletextClass * klass)
+gst_teletextdec_init (GstTeletextDec *teletext, GstTeletextDecClass * klass)
 {
   teletext->sinkpad = gst_pad_new_from_static_template (&sink_template, "sink");
   gst_pad_set_chain_function (teletext->sinkpad,
-                              GST_DEBUG_FUNCPTR (gst_teletext_chain));
+                              GST_DEBUG_FUNCPTR (gst_teletextdec_chain));
   gst_pad_set_event_function (teletext->sinkpad,
-                              GST_DEBUG_FUNCPTR (gst_teletext_sink_event));
+                              GST_DEBUG_FUNCPTR (gst_teletextdec_sink_event));
 
   teletext->srcpad = gst_pad_new_from_static_template (&src_template, "src");
   gst_pad_use_fixed_caps (teletext->srcpad);
@@ -184,9 +184,9 @@ gst_teletext_init (GstTeletext *teletext, GstTeletextClass * klass)
 }
 
 static void
-gst_teletext_finalize (GObject *object)
+gst_teletextdec_finalize (GObject *object)
 {
-  GstTeletext *teletext = GST_TELETEXT (object);
+  GstTeletextDec *teletext = GST_TELETEXTDEC (object);
 
   g_mutex_free (teletext->queue_lock);
 
@@ -194,13 +194,13 @@ gst_teletext_finalize (GObject *object)
 }
 
 static void
-gst_teletext_zvbi_init (GstTeletext * teletext)
+gst_teletextdec_zvbi_init (GstTeletextDec * teletext)
 {
   g_return_if_fail (teletext != NULL);
 
   GST_LOG_OBJECT (teletext, "Initializing structures");
 
-  teletext->demux = vbi_dvb_pes_demux_new (gst_teletext_convert, teletext);
+  teletext->demux = vbi_dvb_pes_demux_new (gst_teletextdec_convert, teletext);
 
   teletext->decoder = vbi_decoder_new ();
 
@@ -213,7 +213,7 @@ gst_teletext_zvbi_init (GstTeletext * teletext)
 }
 
 static void
-gst_teletext_zvbi_clear (GstTeletext * teletext)
+gst_teletextdec_zvbi_clear (GstTeletextDec * teletext)
 {
   g_return_if_fail (teletext != NULL);
 
@@ -242,10 +242,10 @@ gst_teletext_zvbi_clear (GstTeletext * teletext)
 }
 
 static void
-gst_teletext_set_property (GObject * object, guint prop_id,
+gst_teletextdec_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec)
 {
-  GstTeletext *teletext = GST_TELETEXT (object);
+  GstTeletextDec *teletext = GST_TELETEXTDEC (object);
 
   switch (prop_id) {
     case PROP_PAGENO:
@@ -261,10 +261,10 @@ gst_teletext_set_property (GObject * object, guint prop_id,
 }
 
 static void
-gst_teletext_get_property (GObject * object, guint prop_id,
+gst_teletextdec_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec)
 {
-  GstTeletext *teletext = GST_TELETEXT (object);
+  GstTeletextDec *teletext = GST_TELETEXTDEC (object);
 
   switch (prop_id) {
     case PROP_PAGENO:
@@ -282,9 +282,9 @@ gst_teletext_get_property (GObject * object, guint prop_id,
 /* this function does the actual processing
  */
 static GstFlowReturn
-gst_teletext_chain (GstPad * pad, GstBuffer * buf)
+gst_teletextdec_chain (GstPad * pad, GstBuffer * buf)
 {
-  GstTeletext *teletext = GST_TELETEXT (gst_pad_get_parent (pad));
+  GstTeletextDec *teletext = GST_TELETEXTDEC (gst_pad_get_parent (pad));
   gboolean success;
   GstFlowReturn result = GST_FLOW_OK;
 
@@ -315,7 +315,7 @@ gst_teletext_chain (GstPad * pad, GstBuffer * buf)
     if (G_UNLIKELY (!success))
       goto fetch_page_failed;
 
-    result = gst_teletext_push_page (teletext, &page);
+    result = gst_teletextdec_push_page (teletext, &page);
 
     vbi_unref_page (&page);
   }
@@ -335,10 +335,10 @@ fetch_page_failed:
 }
 
 static gboolean
-gst_teletext_sink_event (GstPad * pad, GstEvent * event)
+gst_teletextdec_sink_event (GstPad * pad, GstEvent * event)
 {
   gboolean ret;
-  GstTeletext *teletext = GST_TELETEXT (gst_pad_get_parent (pad));
+  GstTeletextDec *teletext = GST_TELETEXTDEC (gst_pad_get_parent (pad));
 
   GST_DEBUG_OBJECT (teletext, "got event %s",
       gst_event_type_get_name (GST_EVENT_TYPE (event)));
@@ -353,12 +353,12 @@ gst_teletext_sink_event (GstPad * pad, GstEvent * event)
       break;
     case GST_EVENT_EOS:
       /* end-of-stream, we should close down all stream leftovers here */
-      gst_teletext_zvbi_clear (teletext);
+      gst_teletextdec_zvbi_clear (teletext);
       ret = gst_pad_push_event (teletext->srcpad, event);
       break;
     case GST_EVENT_FLUSH_STOP:
-      gst_teletext_zvbi_clear (teletext);
-      gst_teletext_zvbi_init (teletext);
+      gst_teletextdec_zvbi_clear (teletext);
+      gst_teletextdec_zvbi_init (teletext);
       ret = gst_pad_push_event (teletext->srcpad, event);
       break;      
     default:
@@ -372,16 +372,16 @@ gst_teletext_sink_event (GstPad * pad, GstEvent * event)
 }
 
 static GstStateChangeReturn
-gst_teletext_change_state (GstElement * element, GstStateChange transition)
+gst_teletextdec_change_state (GstElement * element, GstStateChange transition)
 {
   GstStateChangeReturn ret;
-  GstTeletext *teletext;
+  GstTeletextDec *teletext;
 
-  teletext = GST_TELETEXT (element);
+  teletext = GST_TELETEXTDEC (element);
 
   switch (transition) {
     case GST_STATE_CHANGE_READY_TO_PAUSED:
-      gst_teletext_zvbi_init (teletext);
+      gst_teletextdec_zvbi_init (teletext);
       break;
     default:
       break;
@@ -393,7 +393,7 @@ gst_teletext_change_state (GstElement * element, GstStateChange transition)
 
   switch (transition) {
     case GST_STATE_CHANGE_PAUSED_TO_READY:
-      gst_teletext_zvbi_clear (teletext);
+      gst_teletextdec_zvbi_clear (teletext);
       break;
     default:
       break;
@@ -403,13 +403,13 @@ gst_teletext_change_state (GstElement * element, GstStateChange transition)
 }
 
 static vbi_bool
-gst_teletext_convert (vbi_dvb_demux * dx,
+gst_teletextdec_convert (vbi_dvb_demux * dx,
     gpointer user_data,
     const vbi_sliced * sliced,
     guint n_lines,
     gint64 pts)
 {
-  GstTeletext *teletext = GST_TELETEXT (user_data);
+  GstTeletextDec *teletext = GST_TELETEXTDEC (user_data);
 
   GST_DEBUG_OBJECT (teletext, "Converting %u lines", n_lines);
 
@@ -431,7 +431,7 @@ event_handler (vbi_event * ev, void * user_data)
   vbi_pgno pgno;
   vbi_subno subno;
 
-  GstTeletext *teletext = GST_TELETEXT (user_data);
+  GstTeletextDec *teletext = GST_TELETEXTDEC (user_data);
 
   switch (ev->type) {
     case VBI_EVENT_TTX_PAGE:
@@ -460,7 +460,7 @@ event_handler (vbi_event * ev, void * user_data)
 }
 
 static GstFlowReturn
-gst_teletext_push_page (GstTeletext * teletext, vbi_page * page)
+gst_teletextdec_push_page (GstTeletextDec * teletext, vbi_page * page)
 {
   GstBuffer *buf;
   guint size;

@@ -19,29 +19,29 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef __GST_TELETEXT_H__
-#define __GST_TELETEXT_H__
+#ifndef __GST_TELETEXTDEC_H__
+#define __GST_TELETEXTDEC_H__
 
 #include <gst/gst.h>
 #include <libzvbi.h>
 
 G_BEGIN_DECLS
 
-#define GST_TYPE_TELETEXT \
-  (gst_teletext_get_type())
-#define GST_TELETEXT(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_TELETEXT,GstTeletext))
-#define GST_TELETEXT_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_TELETEXT,GstTeletextClass))
-#define GST_IS_TELETEXT(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_TELETEXT))
-#define GST_IS_TELETEXT_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_TELETEXT))
+#define GST_TYPE_TELETEXTDEC \
+  (gst_teletextdec_get_type())
+#define GST_TELETEXTDEC(obj) \
+  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_TELETEXTDEC,GstTeletextDec))
+#define GST_TELETEXTDEC_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_TELETEXTDEC,GstTeletextDecClass))
+#define GST_IS_TELETEXTDEC(obj) \
+  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_TELETEXTDEC))
+#define GST_IS_TELETEXTDEC_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_TELETEXTDEC))
 
-typedef struct _GstTeletext      GstTeletext;
-typedef struct _GstTeletextClass GstTeletextClass;
+typedef struct _GstTeletextDec      GstTeletextDec;
+typedef struct _GstTeletextDecClass GstTeletextDecClass;
 
-struct _GstTeletext {
+struct _GstTeletextDec {
   GstElement element;
 
   GstPad *sinkpad;
@@ -60,12 +60,12 @@ struct _GstTeletext {
   GMutex *queue_lock;
 };
 
-struct _GstTeletextClass {
+struct _GstTeletextDecClass {
   GstElementClass parent_class;
 };
 
-GType gst_teletext_get_type (void);
+GType gst_teletextdec_get_type (void);
 
 G_END_DECLS
 
-#endif /* __GST_GSTTELETEXT_H__ */
+#endif /* __GST_TELETEXTDEC_H__ */

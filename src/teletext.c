@@ -23,7 +23,7 @@
 #endif
 
 #include <gst/gst.h>
-#include "gstteletext.h"
+#include "gstteletextdec.h"
 
 /* entry point to initialize the plug-in
  * initialize the plug-in itself
@@ -41,14 +41,14 @@ teletext_init (GstPlugin * teletext)
       /* user_data */ NULL);
 
   return gst_element_register (teletext, "teletext", GST_RANK_NONE,
-      GST_TYPE_TELETEXT);
+      GST_TYPE_TELETEXTDEC);
 }
 
 GST_PLUGIN_DEFINE (
     GST_VERSION_MAJOR,
     GST_VERSION_MINOR,
     "teletext",
-    "Teletext decoder",
+    "Teletext plugin",
     teletext_init,
     VERSION,
     "LGPL",
