@@ -32,9 +32,6 @@
 static gboolean
 teletext_init (GstPlugin * teletext)
 {
-  /* initialize gst controller library */
-  //gst_controller_init (NULL, NULL);
-
   /* Helps debugging. */
   vbi_set_log_fn ((VBI_LOG_NOTICE |
         VBI_LOG_WARNING |
@@ -47,10 +44,6 @@ teletext_init (GstPlugin * teletext)
       GST_TYPE_TELETEXT);
 }
 
-/* gstreamer looks for this structure to register gstteletexts
- *
- * FIXME:exchange the string 'Template gstteletext' with you gstteletext description
- */
 GST_PLUGIN_DEFINE (
     GST_VERSION_MAJOR,
     GST_VERSION_MINOR,
