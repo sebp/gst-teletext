@@ -6,6 +6,8 @@ DIE=0
 package=gst-plugin
 srcfile=src/main.c
 
+touch ChangeLog
+
 # autogen.sh helper functions (copied from GStreamer's common/ CVS module)
 if test ! -f ./gst-autogen.sh;
 then
