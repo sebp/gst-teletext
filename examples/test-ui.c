@@ -22,6 +22,7 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
 #include <gst/interfaces/xoverlay.h>
+#include <libzvbi.h>
 
 #define LIVE_PIPELINE \
   "dvbbasebin frequency=754000000 modulation=\"QAM 16\" trans-mode=8k code-rate-hp=2/3 " \
@@ -56,7 +57,7 @@ on_spin_changed (GtkSpinButton * button, gpointer user_data)
 {
   gint pgno;
 
-  pgno = (gint)gtk_spin_button_get_value (button);
+  pgno = gtk_spin_button_get_value_as_int (button);
   change_page (pgno);
 }
 
@@ -77,7 +78,7 @@ create_window (void)
   gtk_container_add (GTK_CONTAINER (window), vbox);
   gtk_widget_show (vbox);
 
-  spin = gtk_spin_button_new_with_range (0x100, 0x8FF, 1.0);
+  spin = gtk_spin_button_new_with_range (100, 999, 1.0);
   g_signal_connect (G_OBJECT (spin), "value-changed",
       G_CALLBACK (on_spin_changed), NULL);
   gtk_box_pack_end (GTK_BOX (vbox), spin, FALSE, FALSE, 0);
@@ -95,11 +96,13 @@ static void
 change_page (gint pgno)
 {
   GValue val = {0,};
+  gint bcd_page;
 
-  g_message ("Changing page to %03x", pgno); 
+  bcd_page = (gint)vbi_dec2bcd(pgno);
+  g_message ("Changing page to %03d (%03d)", pgno, bcd_page);
 
   g_value_init (&val, G_TYPE_INT);
-  g_value_set_int (&val, pgno);
+  g_value_set_int (&val, bcd_page);
   g_object_set_property (G_OBJECT (teletext), "page", &val);
 
   g_value_unset (&val);
