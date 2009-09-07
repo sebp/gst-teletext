@@ -40,7 +40,7 @@ teletext_init (GstPlugin * teletext)
       vbi_log_on_stderr,
       /* user_data */ NULL);
 
-  return gst_element_register (teletext, "teletext", GST_RANK_NONE,
+  return gst_element_register (teletext, "teletextdec", GST_RANK_NONE,
       GST_TYPE_TELETEXTDEC);
 }
 
