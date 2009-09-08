@@ -142,7 +142,7 @@ gst_teletextdec_class_init (GstTeletextDecClass * klass)
   g_object_class_install_property (gobject_class, PROP_PAGENO,
       g_param_spec_int ("page", "Page number",
         "Number of page that should displayed",
-        0x100, 0x8FF, 0x100, G_PARAM_READWRITE));
+        100, 999, 100, G_PARAM_READWRITE));
 
   g_object_class_install_property (gobject_class, PROP_SUBNO,
       g_param_spec_int ("subpage", "Sub-page number",
@@ -249,7 +249,7 @@ gst_teletextdec_set_property (GObject * object, guint prop_id,
 
   switch (prop_id) {
     case PROP_PAGENO:
-      teletext->pageno = g_value_get_int (value);
+      teletext->pageno = (gint)vbi_bin2bcd (g_value_get_int (value));
       break;
     case PROP_SUBNO:
       teletext->subno = g_value_get_int (value);
@@ -268,7 +268,7 @@ gst_teletextdec_get_property (GObject * object, guint prop_id,
 
   switch (prop_id) {
     case PROP_PAGENO:
-      g_value_set_int (value, teletext->pageno);
+      g_value_set_int (value, (gint)vbi_bcd2dec (teletext->pageno));
       break;
     case PROP_SUBNO:
       g_value_set_int (value, teletext->subno);
