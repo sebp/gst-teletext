@@ -22,7 +22,6 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
 #include <gst/interfaces/xoverlay.h>
-#include <libzvbi.h>
 
 #define LIVE_PIPELINE \
   "dvbbasebin frequency=754000000 modulation=\"QAM 16\" trans-mode=8k code-rate-hp=2/3 " \
@@ -96,13 +95,11 @@ static void
 change_page (gint pgno)
 {
   GValue val = {0,};
-  gint bcd_page;
 
-  bcd_page = (gint)vbi_dec2bcd(pgno);
-  g_message ("Changing page to %03d (%03d)", pgno, bcd_page);
+  g_message ("Changing page to %03d", pgno);
 
   g_value_init (&val, G_TYPE_INT);
-  g_value_set_int (&val, bcd_page);
+  g_value_set_int (&val, pgno);
   g_object_set_property (G_OBJECT (teletext), "page", &val);
 
   g_value_unset (&val);
