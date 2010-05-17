@@ -52,7 +52,8 @@ dnl And we can also ask for the right version of gstreamer
 
 
 PKG_CHECK_MODULES(GST, \
-  gstreamer-$GST_MAJORMINOR >= $GST_REQUIRED,
+  gstreamer-$GST_MAJORMINOR >= $GST_REQUIRED
+  gstreamer-video-$GST_MAJORMINOR,
   HAVE_GST=yes,HAVE_GST=no)
 
 dnl Give error and exit if we don't have gstreamer
