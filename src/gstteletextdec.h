@@ -25,7 +25,6 @@
 #include <libzvbi.h>
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_TELETEXTDEC \
   (gst_teletextdec_get_type())
 #define GST_TELETEXTDEC(obj) \
@@ -36,11 +35,24 @@ G_BEGIN_DECLS
   (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_TELETEXTDEC))
 #define GST_IS_TELETEXTDEC_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_TELETEXTDEC))
-
-typedef struct _GstTeletextDec      GstTeletextDec;
+typedef struct _GstTeletextDec GstTeletextDec;
 typedef struct _GstTeletextDecClass GstTeletextDecClass;
+typedef struct _GstTeletextFrame GstTeletextFrame;
+typedef enum _GstTeletextOutputFormat GstTeletextOutputFormat;
 
-struct _GstTeletextDec {
+enum _GstTeletextOutputFormat
+{
+  GST_TELETEXTDEC_OUTPUT_FORMAT_RGBA,
+  GST_TELETEXTDEC_OUTPUT_FORMAT_TEXT,
+  GST_TELETEXTDEC_OUTPUT_FORMAT_HTML,
+  GST_TELETEXTDEC_OUTPUT_FORMAT_SUBTITLES
+};
+
+typedef void (*GstTeletextProcessBufferFunc) (GstTeletextDec *
+    teletext, GstBuffer * buf);
+
+struct _GstTeletextDec
+{
   GstElement element;
 
   GstPad *sinkpad;
@@ -50,21 +62,44 @@ struct _GstTeletextDec {
   GstClockTime in_duration;
   gint rate_numerator;
   gint rate_denominator;
+
+  /* Props */
   gint pageno;
   gint subno;
+  gboolean subtitles_mode;
+  gchar *subtitles_template;
 
-  vbi_dvb_demux * demux;
-  vbi_decoder * decoder;
+  vbi_dvb_demux *demux;
+  vbi_decoder *decoder;
+  vbi_export *exporter;
   GQueue *queue;
   GMutex *queue_lock;
+
+  GstTeletextFrame *frame;
+  float last_ts;
+  GstTeletextOutputFormat output_format;
+
+  GstTeletextProcessBufferFunc process_buf_func;
 };
 
-struct _GstTeletextDecClass {
+struct _GstTeletextFrame
+{
+  vbi_sliced *sliced_begin;
+  vbi_sliced *sliced_end;
+  vbi_sliced *current_slice;
+
+  guint last_field;
+  guint last_field_line;
+  guint last_frame_line;
+};
+
+
+struct _GstTeletextDecClass
+{
   GstElementClass parent_class;
 };
 
 GType gst_teletextdec_get_type (void);
 
 G_END_DECLS
-
 #endif /* __GST_TELETEXTDEC_H__ */
