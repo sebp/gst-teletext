@@ -4,7 +4,7 @@
  * Copyright (C) 2010 Andoni Morales Alastruey <ylatuya@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
- * mod1ify it under the terms of the GNU Lesser General Public
+ * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
@@ -1050,7 +1050,7 @@ gst_teletextdec_extract_data_units (GstTeletextDec * teletext,
 
         if (G_UNLIKELY (data_unit_length != 1 + 1 + 42)) {
           /* Skip this data unit */
-          GST_WARNING_OBJECT (teletext, "The data unit lenght is not 44 bytes");
+          GST_WARNING_OBJECT (teletext, "The data unit length is not 44 bytes");
           break;
         }
 
